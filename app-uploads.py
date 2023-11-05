@@ -17,11 +17,12 @@ async def signup(signup:SignupDetails):
         reader = csv.reader(file)
         for row in reader:
             if signup.username in row[0] or signup.email in row[3]:
-                return {"error":"User is already registered"}
+                return {"error":"Username taken or User already registered"}
     with open("users.csv","a",newline="") as file:
         writer = csv.writer(file)
         writer.writerow(signup)
-    return {"message":f"{signup.username}, you have successfully signed up","details":{"username": signup.username, "firstname": signup.firstname, "lastname": signup.lastname}}
+    return {"message":f"{signup.username}, you have successfully signed up","details":
+            {"username": signup.username, "firstname": signup.firstname, "lastname": signup.lastname}}
     
 
 # Login route

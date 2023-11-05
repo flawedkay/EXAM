@@ -11,17 +11,17 @@ app = FastAPI()
 def home():
     return 'welcome'
 
-
+#To get all blogpost
 @app.get("/blogpost")
 async def get_all_blogposts():
     with open("blogpost.csv","r") as file:
         reader = csv.reader(file)
         all_blogs = []
         for row in reader:
-            all_blogs.append(row)
+            all_blogs.append(row[0],row[1],row[2])
     return all_blogs
 
-
+#To get blogpost content by inputing the title
 @app.get("/blogpost{title}")
 async def get_blogposts_by_title(title:str):
      with open("blogpost.csv","r") as file:
@@ -33,24 +33,21 @@ async def get_blogposts_by_title(title:str):
 
 
 
-# @app.post("/blog/blogpost(add)")
-# async def add_blogpost(author:str,title:str,content:str):
-#     with open("blogpost.txt","a",newline="") as writeup:
-#         writeup.write(author),writeup.write("\n"),writeup.writelines(title),
-#         writeup.write("\n"),writeup.writelines(content),writeup.write("\n")
-#         return [author,title]
-
-
+# To publish or post a blogpost
 @app.post("/blog/post-blogpost")
 async def add_blogpost(login:LoginDetails,blogpost:Blogpost):
+    # Authentifying that only users that are signed up that can post
     with open("users.csv","r") as file:
         reader = csv.reader(file)
         for row in reader:
-            if login.username not in row[0] and login.password in row[4]:
+            if login.username in row[0] and login.password in row[4]:
+                continue
+            else:
                 return {"message":"User not loggedin"}
+    # If User is on the signed up list, user can then post to csv
     with open("blogpost.csv","a",newline="") as writeup:
        writer = csv.writer(writeup)
-       writer.writerow([blogpost.author,blogpost.title,blogpost.content])
+       writer.writerow([blogpost.author,blogpost.title,blogpost.content,login.password]) # The password column is a form of ID authentification for editing.
     return {"message":"blogpost published","Blogpost title":blogpost.title}
 
 
@@ -67,19 +64,46 @@ async def add_blogpost(login:LoginDetails,blogpost:Blogpost):
 #         return {"message":"Blogpost updated successfully","data":blogpost}
     
     
-
-@app.put("/blog/edit-blogpost")
-async def edit_blogpost(blogpost:Blogpost):
+# To edit a blogpost
+@app.put("/blog/edit-blogpost{blogpost.title}")
+async def edit_blogpost(password:str,blogpost:Blogpost):
+    # To first ensure only the author can edit the particular post
     with open("blogpost.csv","r") as file:
         reader = csv.reader(file)
         rows = []
         for row in reader:
             rows.append(row)
+        
+        for index, row in enumerate(rows):
+            print(row)
+            if password != row[3]:
+                return {"message":"Wrong password, only author can edit blogpost"}
+    # Updating the blogpost
     with open("blogpost.csv","w",newline="") as file:
         writer = csv.writer(file)
         for index, row in enumerate(rows):
             if blogpost.title != row[1]:
                 return {"error":"Blogpost title not found"}
-            writer.writerow([blogpost.author,blogpost.title,blogpost.content])
+            writer.writerow([blogpost.author,blogpost.title,blogpost.content,password])
             return {"message":"sucessfully updated"}
 
+
+@app.delete("/blog/delete-blogpost{blogtitle}")
+async def delete_blogpost(password:str,blogtitle:str):
+    with open("blogpost.csv","r") as file:
+        reader = csv.reader(file)
+        rows = []
+        for row in reader:
+            rows.append(row)
+    # To first ensure only the author can delete the particular post
+        for row in rows:
+            if password != row[3]:
+                return {"message":"Wrong password, only author can delete blogpost"} 
+    # delete the blogpost
+    with open("blogpost.csv","w",newline="") as file:
+        writer = csv.writer(file)
+        for index, row in enumerate(rows):                  
+            if blogtitle != row[1]:
+                return {"error":"Blogpost title not found"}
+            continue
+        return {"message":"sucessfully deleted"}

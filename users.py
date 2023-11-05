@@ -1,30 +1,25 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+import schemas
 import csv
 
 
 app = FastAPI()
 
-class User(BaseModel):
-    uname: str
-    password: str
-    email: str
-    firstname: str
-    lastname: str
 
 
 
-@app.post("/user/")
-async def create_user(user:User):
-    with open("database.csv","a",newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([user.uname,user.password,user.email,user.firstname,user.lastname])
-        with open("database.csv","r",newline="") as file:
+
+@app.post("/create-user/")
+async def create_user(user:schemas.User):
+    with open("database.csv","r",newline="") as file:
             reader = csv.reader(file)
             for row in reader:
                 if row[2] == user.email:
                  return {"error":"email has been previously registered"}
-        return{"message":"User created successfully","data":[user.uname,user.email]}
+    with open("database.csv","a",newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow([user.uname,user.password,user.email,user.firstname,user.lastname])
+    return{"message":"User created successfully","data":[user.uname,user.email]}
     
 
 # @app.put("/user{username}")
