@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form,APIRouter
-from schemas import SignupDetails,LoginDetails
+from schemas import SignupDetails,LoginDetails,UserDetails
 import csv
 
 app = APIRouter()
@@ -35,3 +35,20 @@ async def login(login:LoginDetails):
            if login.username in row[0] and login.password in row[4]:
                return {"message":f"{login.username} logged in successfully"}
    return {"message":"User not registered"}
+
+# To edit user information
+@app.put("/edit-user-details{userinfo.username}")
+async def edit_user_info(user:str,userinfo:UserDetails):
+    with open("users.csv","r") as file:
+        reader = csv.reader(file)
+# conditional statement to confirm user is already signed up
+        for row in reader:
+            if user in row[0]:
+                with open("users.csv","a",newline="") as file:
+                    writer = csv.writer(file)
+                    row[1] = ['firsname',userinfo.firstname]
+                    row[2] = ['lastname',userinfo.lastname]
+                    row[4] = ['password',userinfo.password]
+                    writer.writerow([row[1],row[2],row[4]])
+                return {"message":f"{user}, you have successfully updated his details","details":
+                        {"username": user, "firstname": userinfo.firstname, "lastname": userinfo.lastname}}
