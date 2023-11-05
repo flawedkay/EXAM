@@ -10,6 +10,12 @@ class SignupDetails(BaseModel):
     password: Annotated[str, Form()]
 
 
+class UserDetails(BaseModel):
+    firstname: Annotated[str, Form()]
+    lastname: Annotated[str, Form()]
+    password: Annotated[str, Form()]
+
+
 class LoginDetails(BaseModel):
     username: Annotated[str, Form()]
     password: Annotated[str, Form()]
