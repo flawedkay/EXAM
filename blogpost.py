@@ -1,8 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,APIRouter
 from schemas import Blog,Blogpost,LoginDetails
 import csv
 
-app = FastAPI()
+app = APIRouter()
 
 
 
@@ -67,25 +67,26 @@ async def add_blogpost(login:LoginDetails,blogpost:Blogpost):
 # To edit a blogpost
 @app.put("/blog/edit-blogpost{blogpost.title}")
 async def edit_blogpost(password:str,blogpost:Blogpost):
-    # To first ensure only the author can edit the particular post
     with open("blogpost.csv","r") as file:
         reader = csv.reader(file)
         rows = []
         for row in reader:
             rows.append(row)
-        
+# To first ensure only the author can edit the particular post        
         for index, row in enumerate(rows):
-            print(row)
-            if password != row[3]:
+            if password == row[3]:
+                continue
+            else:
                 return {"message":"Wrong password, only author can edit blogpost"}
     # Updating the blogpost
     with open("blogpost.csv","w",newline="") as file:
         writer = csv.writer(file)
         for index, row in enumerate(rows):
-            if blogpost.title != row[1]:
+            if blogpost.title == row[1]:
+                writer.writerow([blogpost.author,blogpost.title,blogpost.content,password])
+            else:
                 return {"error":"Blogpost title not found"}
-            writer.writerow([blogpost.author,blogpost.title,blogpost.content,password])
-            return {"message":"sucessfully updated"}
+        return {"message":"sucessfully updated"}
 
 
 @app.delete("/blog/delete-blogpost{blogtitle}")
@@ -96,14 +97,19 @@ async def delete_blogpost(password:str,blogtitle:str):
         for row in reader:
             rows.append(row)
     # To first ensure only the author can delete the particular post
-        for row in rows:
-            if password != row[3]:
+        for index, row in enumerate(rows):
+            if password == row[3]:
+                continue
+            else:
                 return {"message":"Wrong password, only author can delete blogpost"} 
     # delete the blogpost
     with open("blogpost.csv","w",newline="") as file:
         writer = csv.writer(file)
-        for index, row in enumerate(rows):                  
-            if blogtitle != row[1]:
+        for index, row in enumerate(rows):
+            print(row)                  
+            if blogtitle == row[1]:
+                continue
+            else:
+                writer.writerow(row[index])
                 return {"error":"Blogpost title not found"}
-            continue
         return {"message":"sucessfully deleted"}
